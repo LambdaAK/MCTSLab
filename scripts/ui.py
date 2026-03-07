@@ -135,3 +135,36 @@ def print_result(message: str, style: str = "bold green") -> None:
     _ensure_rich()
     console.print()
     console.print(Panel(f"[{style}]{message}[/]", border_style="green" if "win" in message.lower() or "Draw" in message else "yellow"))
+
+
+# --- 2048 (state = (board_16_tuple, turn)) ---
+
+def print_2048_board(state: tuple[tuple[int, ...], str]) -> None:
+    _ensure_rich()
+    board, _ = state
+    SIZE = 4
+    table = Table(box=box.ROUNDED, show_header=False, padding=(0, 2))
+    for _ in range(SIZE):
+        table.add_column(justify="center")
+    for r in range(SIZE):
+        row_cells = []
+        for c in range(SIZE):
+            v = board[r * SIZE + c]
+            s = str(v) if v else "·"
+            if v >= 2048:
+                row_cells.append(Text(s, style="bold yellow"))
+            elif v >= 256:
+                row_cells.append(Text(s, style="bold green"))
+            elif v >= 32:
+                row_cells.append(Text(s, style="cyan"))
+            elif v:
+                row_cells.append(Text(s, style="white"))
+            else:
+                row_cells.append(Text(s, style="dim"))
+        table.add_row(*row_cells)
+    console.print(Panel(table, title="[bold]2048[/bold]", border_style="yellow"))
+
+
+def print_2048_watch_info(move_num: int, score: int, last_move: str | None) -> None:
+    _ensure_rich()
+    console.print(f"  [dim]Move {move_num}[/]  [bold]Score: {score}[/]  [dim]Last: {last_move or '—'}[/]")

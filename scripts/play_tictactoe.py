@@ -13,7 +13,7 @@ repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, repo_root)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from mcts import run_mcts, format_tree, tree_stats
+from mcts import run_mcts, run_flat_ucb, format_tree, tree_stats
 
 from games.tictactoe import TicTacToe, format_board, initial_state
 
@@ -36,6 +36,7 @@ def show_board(state: tuple[int, ...]) -> None:
 def main() -> None:
     import argparse
     p = argparse.ArgumentParser(description="Play Tic-tac-toe vs MCTS bot")
+    p.add_argument("--variant", choices=["uct", "flat_ucb"], default="uct", help="MCTS variant: uct (full tree) or flat_ucb (root-only bandit)")
     p.add_argument("--show-tree", action="store_true", help="Print MCTS tree after each bot move")
     p.add_argument("--tree-depth", type=int, default=2, help="Depth of tree to show (default 2)")
     args = p.parse_args()
@@ -47,6 +48,8 @@ def main() -> None:
     num_simulations = 2000
     show_tree = args.show_tree
     tree_depth = args.tree_depth
+    use_flat_ucb = args.variant == "flat_ucb"
+    run_bot = run_flat_ucb if use_flat_ucb else run_mcts
     action_to_str = lambda a: str(a + 1) if a is not None else "?"
 
     if use_rich:
@@ -84,7 +87,7 @@ def main() -> None:
                 ui.print_bot_thinking()
             else:
                 print("Bot thinking...")
-            root, action = run_mcts(game, state, num_simulations=num_simulations)
+            root, action = run_bot(game, state, num_simulations=num_simulations)
             if action is None:
                 break
             state = game.apply_action(state, action)

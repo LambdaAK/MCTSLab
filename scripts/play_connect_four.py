@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Play Tic-tac-toe vs an MCTS bot. You are X (player 0), bot is O (player 1).
-Moves: enter 1-9 (left-to-right, top-to-bottom).
+Play Connect Four vs an MCTS bot. You are X (player 0), bot is O (player 1).
+Moves: enter column 1–7 (left to right).
 """
 
 from __future__ import annotations
@@ -9,23 +9,22 @@ from __future__ import annotations
 import os
 import sys
 
-# Allow importing from repo root
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from mcts import run_mcts
 
-from games.tictactoe import TicTacToe, format_board, initial_state
+from games.connect_four import ConnectFour, format_board, initial_state
 
 
 def main() -> None:
-    game = TicTacToe()
+    game = ConnectFour()
     state = initial_state()
     human = 0  # X
     bot = 1    # O
-    num_simulations = 2000
+    num_simulations = 5000
 
-    print("Tic-tac-toe — You are X, bot is O. Moves: 1-9 (row-major).")
-    print("Board positions:\n  1 2 3\n  4 5 6\n  7 8 9\n")
+    print("Connect Four — You are X, bot is O. Drop in column 1–7.")
+    print()
 
     while not game.is_terminal(state):
         current = game.get_current_player(state)
@@ -34,16 +33,16 @@ def main() -> None:
 
         if current == human:
             legal = game.get_legal_actions(state)
-            legal_1 = [m + 1 for m in legal]
+            legal_1 = [c + 1 for c in legal]
             while True:
                 try:
-                    s = input("Your move (1-9): ").strip()
+                    s = input("Your move (column 1–7): ").strip()
                     move_1 = int(s)
                     if move_1 in legal_1:
                         break
                 except ValueError:
                     pass
-                print("Invalid. Legal moves:", legal_1)
+                print("Invalid. Legal columns:", legal_1)
             state = game.apply_action(state, move_1 - 1)
         else:
             print("Bot thinking...")
@@ -51,7 +50,7 @@ def main() -> None:
             if action is None:
                 break
             state = game.apply_action(state, action)
-            print(f"Bot plays {action + 1}\n")
+            print(f"Bot drops in column {action + 1}\n")
 
     print(format_board(state))
     outcome = game.get_outcome(state)

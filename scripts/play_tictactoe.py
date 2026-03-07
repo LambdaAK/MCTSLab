@@ -13,7 +13,7 @@ repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, repo_root)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from mcts import run_mcts
+from mcts import run_mcts, format_tree, tree_stats
 
 from games.tictactoe import TicTacToe, format_board, initial_state
 
@@ -34,11 +34,20 @@ def show_board(state: tuple[int, ...]) -> None:
 
 
 def main() -> None:
+    import argparse
+    p = argparse.ArgumentParser(description="Play Tic-tac-toe vs MCTS bot")
+    p.add_argument("--show-tree", action="store_true", help="Print MCTS tree after each bot move")
+    p.add_argument("--tree-depth", type=int, default=2, help="Depth of tree to show (default 2)")
+    args = p.parse_args()
+
     game = TicTacToe()
     state = initial_state()
     human = 0
     bot = 1
     num_simulations = 2000
+    show_tree = args.show_tree
+    tree_depth = args.tree_depth
+    action_to_str = lambda a: str(a + 1) if a is not None else "?"
 
     if use_rich:
         ui.print_ttt_welcome()
@@ -75,7 +84,7 @@ def main() -> None:
                 ui.print_bot_thinking()
             else:
                 print("Bot thinking...")
-            _, action = run_mcts(game, state, num_simulations=num_simulations)
+            root, action = run_mcts(game, state, num_simulations=num_simulations)
             if action is None:
                 break
             state = game.apply_action(state, action)
@@ -83,6 +92,11 @@ def main() -> None:
                 ui.print_bot_played(action + 1, "ttt")
             else:
                 print(f"Bot plays {action + 1}\n")
+            if show_tree:
+                stats = tree_stats(root)
+                print(f"[Tree: {stats['node_count']} nodes, depth={stats['max_depth']}]")
+                print(format_tree(root, max_depth=tree_depth, action_to_str=action_to_str))
+                print()
 
     show_board(state)
     outcome = game.get_outcome(state)

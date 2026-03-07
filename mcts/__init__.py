@@ -8,6 +8,7 @@ from mcts.game import ApplyResult, Game, Outcome, PlayerId
 from mcts.node import Node
 from mcts.rollout import rollout_until_terminal
 from mcts.uct import one_uct_iteration, run_mcts
+from mcts.visualize import format_tree, tree_stats, to_dot
 
 __all__ = [
     "Game",
@@ -18,4 +19,7 @@ __all__ = [
     "rollout_until_terminal",
     "one_uct_iteration",
     "run_mcts",
+    "format_tree",
+    "tree_stats",
+    "to_dot",
 ]

@@ -81,9 +81,12 @@ def run_benchmark(
     if game_name == "tictactoe":
         from games.tictactoe import TicTacToe, initial_state
         game = TicTacToe()
-    else:
+    elif game_name == "connect4":
         from games.connect_four import ConnectFour, initial_state
         game = ConnectFour()
+    else:
+        from games.checkers import Checkers, initial_state
+        game = Checkers()
 
     run_bot = run_flat_ucb if variant == "flat_ucb" else run_mcts
     rng = random.Random(seed)
@@ -125,7 +128,7 @@ def run_benchmark(
 
 def main() -> None:
     p = argparse.ArgumentParser(description="Benchmark MCTS vs random player")
-    p.add_argument("--game", choices=["tictactoe", "connect4"], default="tictactoe")
+    p.add_argument("--game", choices=["tictactoe", "connect4", "checkers"], default="tictactoe")
     p.add_argument("--variant", choices=["uct", "flat_ucb"], default="uct")
     p.add_argument("--games", type=int, default=50, help="Games per side (total = 2*games)")
     p.add_argument("--simulations", type=int, nargs="+", default=[100, 500, 1000], help="Simulation counts to compare (e.g. 100 500 1000)")

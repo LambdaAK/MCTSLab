@@ -168,3 +168,52 @@ def print_2048_board(state: tuple[tuple[int, ...], str]) -> None:
 def print_2048_watch_info(move_num: int, score: int, last_move: str | None) -> None:
     _ensure_rich()
     console.print(f"  [dim]Move {move_num}[/]  [bold]Score: {score}[/]  [dim]Last: {last_move or '—'}[/]")
+
+
+# --- Checkers (state = (board_36_tuple, turn)) ---
+
+def print_checkers_board(state: tuple[tuple[int, ...], int]) -> None:
+    _ensure_rich()
+    board, _ = state
+    ROWS, COLS = 6, 6
+
+    def is_dark(r: int, c: int) -> bool:
+        return (r + c) % 2 == 1
+
+    def get(r: int, c: int) -> int:
+        return board[r * COLS + c] if 0 <= r < ROWS and 0 <= c < COLS else 0
+
+    table = Table(box=box.ROUNDED, show_header=True, padding=(0, 1))
+    table.add_column("", justify="right", style="dim", width=2)
+    for c in range(COLS):
+        table.add_column(chr(ord("a") + c), justify="center")
+    chars = {0: "·", 1: "●", 2: "◆", 3: "○", 4: "◇"}
+    for r in range(ROWS):
+        row_cells = [Text(str(ROWS - r), style="dim")]
+        for c in range(COLS):
+            if is_dark(r, c):
+                v = get(r, c)
+                cell = chars.get(v, "?")
+                if v in (1, 2):
+                    row_cells.append(Text(cell, style="bold red"))
+                elif v in (3, 4):
+                    row_cells.append(Text(cell, style="bold blue"))
+                else:
+                    row_cells.append(Text(cell, style="dim"))
+            else:
+                row_cells.append(Text(" ", style="dim"))
+        table.add_row(*row_cells)
+    table.add_row(Text("", style="dim"), *[Text(chr(ord("a") + c), style="dim") for c in range(COLS)])
+    console.print(Panel(table, title="[bold]Checkers (6×6)[/bold]", border_style="cyan"))
+
+
+def print_checkers_welcome() -> None:
+    _ensure_rich()
+    console.print()
+    console.print(Panel(
+        "[bold cyan]You are ● (red)[/], [bold blue]Bot is ○ (blue)[/].\n"
+        "Enter the number of your chosen move (1, 2, 3, …).",
+        title="Checkers",
+        border_style="cyan",
+    ))
+    console.print()

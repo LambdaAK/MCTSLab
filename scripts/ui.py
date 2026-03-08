@@ -103,14 +103,81 @@ def print_c4_welcome() -> None:
     console.print()
 
 
+# --- Dots and Boxes ---
+
+def print_dots_board(state: tuple) -> None:
+    _ensure_rich()
+    from games.dots_and_boxes import ROWS, COLS, NUM_H_EDGES, NUM_EDGES, _box_owner_from_state, _is_box_complete, _box_edges
+    edges, current, score0, score1, _ = state
+
+    def h_label(idx: int) -> str:
+        n = idx + 1
+        if edges[idx] == 0:
+            return f" [dim]{n:2}[/dim] "
+        return " [bold red]X[/bold red]  " if edges[idx] == 1 else " [bold blue]O[/bold blue]  "
+
+    def v_label(idx: int) -> str:
+        n = idx + 1
+        if edges[idx] == 0:
+            return f"[dim]{n:2}[/dim]"
+        return "[bold red]X[/bold red] " if edges[idx] == 1 else "[bold blue]O[/bold blue] "
+
+    def box_center(r: int, c: int) -> str:
+        from games.dots_and_boxes import _box_owner_from_state
+        owner = _box_owner_from_state(state, r, c)
+        if owner is None:
+            return " "
+        return "[bold red]X[/bold red]" if owner == 1 else "[bold blue]O[/bold blue]"
+
+    lines: list[str] = []
+    for dr in range(ROWS + 1):
+        row_str = "●"
+        for dc in range(COLS):
+            idx = dr * COLS + dc
+            row_str += "───" + h_label(idx) + "───●"
+        lines.append(row_str)
+        if dr < ROWS:
+            v_row = ""
+            for dc in range(COLS + 1):
+                idx = NUM_H_EDGES + dr * (COLS + 1) + dc
+                v_row += v_label(idx) + "│"
+                if dc < COLS:
+                    v_row += box_center(dr, dc) + "│"
+            lines.append(v_row)
+
+    lines.append("")
+    lines.append(f"Scores: [bold red]You={score0}[/bold red]  [bold blue]Bot={score1}[/bold blue]  |  Current: {'You' if current == 0 else 'Bot'}")
+    lines.append(f"[dim]Enter 1–{NUM_EDGES} to claim. 1–{NUM_H_EDGES}=horizontal, {NUM_H_EDGES+1}–{NUM_EDGES}=vertical.[/dim]")
+    console.print(Panel("\n".join(lines), title="[bold]Dots and Boxes[/bold]", border_style="cyan"))
+
+
+def print_dots_welcome() -> None:
+    _ensure_rich()
+    from games.dots_and_boxes import NUM_EDGES
+    console.print()
+    console.print(Panel(
+        "[bold cyan]You are X (red)[/], [bold blue]Bot is O (blue)[/].\n"
+        f"Enter a number [1–{NUM_EDGES}] to claim that edge. Numbers on the board show unclaimed edges.\n"
+        "Complete a box (4 edges) to score a point and play again.",
+        title="Dots and Boxes",
+        border_style="cyan",
+    ))
+    console.print()
+
+
 # --- Shared ---
 
 def print_turn_prompt(legal_1: list[int], game: str = "move") -> None:
     _ensure_rich()
     if game == "move":
         console.print(f"[bold]Your move (1–9):[/] ", end="")
-    else:
+    elif game == "c4":
         console.print(f"[bold]Your move (column 1–7):[/] ", end="")
+    elif game == "dots":
+        from games.dots_and_boxes import NUM_EDGES
+        console.print(f"[bold]Your move (1–{NUM_EDGES}):[/] ", end="")
+    else:
+        console.print(f"[bold]Your move:[/] ", end="")
 
 
 def print_invalid(legal_1: list[int]) -> None:
@@ -127,8 +194,12 @@ def print_bot_played(move_1: int, game: str = "ttt") -> None:
     _ensure_rich()
     if game == "ttt":
         console.print(f"[blue]Bot plays [bold]{move_1}[/bold][/blue]\n")
-    else:
+    elif game == "c4":
         console.print(f"[blue]Bot drops in column [bold]{move_1}[/bold][/blue]\n")
+    elif game == "dots":
+        console.print(f"[blue]Bot claims edge [bold]{move_1}[/bold][/blue]\n")
+    else:
+        console.print(f"[blue]Bot plays [bold]{move_1}[/bold][/blue]\n")
 
 
 def print_result(message: str, style: str = "bold green") -> None:

@@ -1,4 +1,4 @@
-.PHONY: tictactoe tictactoe-tree connect4 connect4-tree connect-four checkers 2048 benchmark help test
+.PHONY: tictactoe tictactoe-tree connect4 connect4-tree connect-four checkers dots dots-terminal pygame 2048 benchmark help test
 
 help:
 	@echo "MCTSLab — run games or tests"
@@ -7,10 +7,13 @@ help:
 	@echo "  make tictactoe-tree — Play Tic-tac-toe with tree shown after each bot move"
 	@echo "  make connect4       — Play Connect Four vs MCTS bot"
 	@echo "  make connect4-tree  — Play Connect Four with tree shown after each bot move"
-	@echo "  make checkers      — Play Checkers (6×6) vs MCTS bot"
-	@echo "  make 2048       — Watch MCTS play 2048 (1s delay between moves)"
-	@echo "  make benchmark  — MCTS vs random win-rate (tic-tac-toe, 50 games per side)"
-	@echo "  make test       — Run tests"
+	@echo "  make checkers       — Play Checkers (6×6) vs MCTS bot"
+	@echo "  make dots           — Play Dots and Boxes (Pygame GUI). Use SIMULATIONS=N for strength"
+	@echo "  make dots-terminal  — Dots and Boxes in terminal"
+	@echo "  make pygame         — Pygame GUI (tictactoe, connect4, dots)"
+	@echo "  make 2048           — Watch MCTS play 2048 (1s delay between moves)"
+	@echo "  make benchmark      — MCTS vs random win-rate (tic-tac-toe, 50 games per side)"
+	@echo "  make test           — Run tests"
 	@echo ""
 
 tictactoe:
@@ -27,6 +30,15 @@ connect4-tree:
 
 checkers:
 	python scripts/play_checkers.py
+
+dots:
+	python scripts/play_dots.py $(if $(SIMULATIONS),--simulations $(SIMULATIONS),)
+
+dots-terminal:
+	python scripts/play_dots.py --terminal
+
+pygame:
+	python scripts/pygame_ui.py --game tictactoe
 
 2048:
 	python scripts/play_2048.py

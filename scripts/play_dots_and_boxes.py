@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Play Connect Four vs an MCTS bot. You are X (player 0), bot is O (player 1).
-Moves: enter column 1–7 (left to right).
+Play Dots and Boxes vs an MCTS bot. You are X (player 0), bot is O (player 1).
+Claim edges by entering 1–N (1-based; see board for numbering).
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from mcts import run_mcts, run_flat_ucb, format_tree, tree_stats
 
-from games.connect_four import ConnectFour, format_board, initial_state
+from games.dots_and_boxes import DotsAndBoxes, format_board, initial_state, NUM_EDGES
 
 try:
     import ui
@@ -24,9 +24,9 @@ except ImportError:
     use_rich = False
 
 
-def show_board(state: tuple[int, ...]) -> None:
+def show_board(state) -> None:
     if use_rich:
-        ui.print_c4_board(state)
+        ui.print_dots_board(state)
     else:
         print(format_board(state))
         print()
@@ -34,14 +34,14 @@ def show_board(state: tuple[int, ...]) -> None:
 
 def main() -> None:
     import argparse
-    p = argparse.ArgumentParser(description="Play Connect Four vs MCTS bot")
-    p.add_argument("--variant", choices=["uct", "flat_ucb"], default="uct", help="MCTS variant: uct (full tree) or flat_ucb (root-only bandit)")
+    p = argparse.ArgumentParser(description="Play Dots and Boxes vs MCTS bot")
+    p.add_argument("--variant", choices=["uct", "flat_ucb"], default="uct")
     p.add_argument("--show-tree", action="store_true", help="Print MCTS tree after each bot move")
-    p.add_argument("--tree-depth", type=int, default=2, help="Depth of tree to show (default 2)")
-    p.add_argument("--simulations", type=int, default=5000, help="MCTS simulations per bot move")
+    p.add_argument("--tree-depth", type=int, default=2)
+    p.add_argument("--simulations", type=int, default=7000, help="MCTS simulations per move")
     args = p.parse_args()
 
-    game = ConnectFour()
+    game = DotsAndBoxes()
     state = initial_state()
     human = 0
     bot = 1
@@ -53,9 +53,9 @@ def main() -> None:
     action_to_str = lambda a: str(a + 1) if a is not None else "?"
 
     if use_rich:
-        ui.print_c4_welcome()
+        ui.print_dots_welcome()
     else:
-        print("Connect Four — You are X, bot is O. Drop in column 1–7.\n")
+        print(f"Dots and Boxes — You are X, bot is O. Enter 1–{NUM_EDGES} to claim an edge.\n")
 
     while not game.is_terminal(state):
         current = game.get_current_player(state)
@@ -63,24 +63,25 @@ def main() -> None:
 
         if current == human:
             legal = game.get_legal_actions(state)
-            legal_1 = [c + 1 for c in legal]
+            legal_display = [e + 1 for e in legal]
             while True:
                 if use_rich:
-                    ui.print_turn_prompt(legal_1, "c4")
+                    ui.print_turn_prompt(legal_display, "dots")
                 else:
-                    print("Your move (column 1–7): ", end="")
+                    print(f"Your move (1–{NUM_EDGES}): ", end="")
                 try:
                     s = input().strip()
                     move_1 = int(s)
-                    if move_1 in legal_1:
+                    move = move_1 - 1
+                    if move in legal:
                         break
                 except ValueError:
                     pass
                 if use_rich:
-                    ui.print_invalid(legal_1)
+                    ui.print_invalid(legal_display)
                 else:
-                    print("Invalid. Legal columns:", legal_1)
-            state = game.apply_action(state, move_1 - 1)
+                    print("Invalid. Legal edges:", sorted(legal_display))
+            state = game.apply_action(state, move)
         else:
             if use_rich:
                 ui.print_bot_thinking()
@@ -91,9 +92,9 @@ def main() -> None:
                 break
             state = game.apply_action(state, action)
             if use_rich:
-                ui.print_bot_played(action + 1, "c4")
+                ui.print_bot_played(action + 1, "dots")
             else:
-                print(f"Bot drops in column {action + 1}\n")
+                print(f"Bot claims edge {action + 1}\n")
             if show_tree:
                 stats = tree_stats(root)
                 print(f"[Tree: {stats['node_count']} nodes, depth={stats['max_depth']}]")

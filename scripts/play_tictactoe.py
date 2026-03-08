@@ -39,13 +39,14 @@ def main() -> None:
     p.add_argument("--variant", choices=["uct", "flat_ucb"], default="uct", help="MCTS variant: uct (full tree) or flat_ucb (root-only bandit)")
     p.add_argument("--show-tree", action="store_true", help="Print MCTS tree after each bot move")
     p.add_argument("--tree-depth", type=int, default=2, help="Depth of tree to show (default 2)")
+    p.add_argument("--simulations", type=int, default=2000, help="MCTS simulations per bot move")
     args = p.parse_args()
 
     game = TicTacToe()
     state = initial_state()
     human = 0
     bot = 1
-    num_simulations = 2000
+    num_simulations = args.simulations
     show_tree = args.show_tree
     tree_depth = args.tree_depth
     use_flat_ucb = args.variant == "flat_ucb"

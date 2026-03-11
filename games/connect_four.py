@@ -6,6 +6,8 @@ Actions are column indices 0–6.
 
 from __future__ import annotations
 
+import random
+
 ROWS = 6
 COLS = 7
 
@@ -61,6 +63,31 @@ def winner(board: Board) -> int | None:
     return None
 
 
+def _winner_at(board: Board, row: int, col: int) -> int | None:
+    """Check if the piece at (row, col) is part of a winning four-in-a-row.
+
+    Only examines the 4 directions through (row, col), so O(1) vs a full board scan.
+    """
+    val = board[row * COLS + col]
+    if not val:
+        return None
+
+    def run(dr: int, dc: int) -> int:
+        """Count consecutive matching cells in one direction."""
+        count = 0
+        r, c = row + dr, col + dc
+        while 0 <= r < ROWS and 0 <= c < COLS and board[r * COLS + c] == val:
+            count += 1
+            r += dr
+            c += dc
+        return count
+
+    for dr, dc in ((0, 1), (1, 0), (1, 1), (1, -1)):
+        if 1 + run(dr, dc) + run(-dr, -dc) >= 4:
+            return val
+    return None
+
+
 class ConnectFour:
     def get_current_player(self, state: Board) -> int:
         return get_current_player_from_board(state)
@@ -89,6 +116,28 @@ class ConnectFour:
         if w is not None:
             return {0: 1.0 if w == 1 else 0.0, 1: 1.0 if w == 2 else 0.0}
         return {0: 0.5, 1: 0.5}
+
+    def rollout_action(self, state: Board, legal: list[int], rng: random.Random) -> int:
+        player = self.get_current_player(state)
+        player_val = player + 1
+        opp_val = 3 - player_val
+
+        blocking = []
+        for a in legal:
+            row = _drop_row(state, a)
+            board = list(state)
+            # Check if we win by playing here.
+            board[row * COLS + a] = player_val
+            if _winner_at(tuple(board), row, a) == player_val:
+                return a
+            # Check if the opponent would win by playing here (so we must block).
+            board[row * COLS + a] = opp_val
+            if _winner_at(tuple(board), row, a) == opp_val:
+                blocking.append(a)
+
+        if blocking:
+            return rng.choice(blocking)
+        return rng.choice(legal)
 
 
 def format_board(board: Board) -> str:

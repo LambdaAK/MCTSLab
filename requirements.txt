@@ -1,0 +1,5 @@
+# MCTSLab — no required dependencies for core MCTS (stdlib only)
+# Optional: rich — for the enhanced terminal UI when running play scripts
+rich>=13.0.0
+# Optional: pygame — for the graphical interface
+pygame>=2.5.0

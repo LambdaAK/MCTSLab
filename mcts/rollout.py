@@ -50,7 +50,10 @@ def rollout_until_terminal(
 
         if not legal:
             break
-        action = rng.choice(legal)
+        if hasattr(game, "rollout_action"):
+            action = game.rollout_action(state, legal, rng)
+        else:
+            action = rng.choice(legal)
         result = game.apply_action(state, action)
 
         if isinstance(result, list):

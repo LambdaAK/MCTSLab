@@ -6,6 +6,7 @@ Actions are edge indices 0..num_edges-1.
 
 from __future__ import annotations
 
+import random
 from typing import Any
 
 from mcts.game import Game
@@ -120,6 +121,25 @@ class DotsAndBoxes:
         if score1 > score0:
             return {0: 0.0, 1: 1.0}
         return {0: 0.5, 1: 0.5}
+
+    def rollout_action(self, state: State, legal: list[int], rng: random.Random) -> int:
+        edges = state[0]
+        current = state[1]
+        # Complete a box immediately (grants another turn).
+        completing = [a for a in legal if self.apply_action(state, a)[1] == current]
+        if completing:
+            return rng.choice(completing)
+        # Avoid leaving a 3-sided box that the opponent can complete next turn.
+        # An edge is "dangerous" if playing it raises any adjacent box to 3 filled edges.
+        def is_dangerous(a: int) -> bool:
+            for (r, c) in _boxes_for_edge(a):
+                te, be, le, re = _box_edges(r, c)
+                filled = sum(1 for e in (te, be, le, re) if edges[e] != 0)
+                if filled == 2:  # becomes 3 after we play a → opponent can complete
+                    return True
+            return False
+        safe = [a for a in legal if not is_dangerous(a)]
+        return rng.choice(safe) if safe else rng.choice(legal)
 
 
 def _box_owner_from_state(state: State, r: int, c: int) -> int | None:

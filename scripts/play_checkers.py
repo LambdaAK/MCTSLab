@@ -13,7 +13,14 @@ repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, repo_root)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from mcts import run_mcts, run_flat_ucb, format_tree, tree_stats
+from mcts import (
+    run_mcts,
+    run_flat_ucb,
+    format_tree,
+    tree_stats,
+    format_root_action_table,
+    principal_variation,
+)
 
 from games.checkers import Checkers, format_board, initial_state, move_to_str
 
@@ -39,6 +46,11 @@ def main() -> None:
     p.add_argument("--show-tree", action="store_true", help="Print MCTS tree after each bot move")
     p.add_argument("--tree-depth", type=int, default=2)
     p.add_argument("--simulations", type=int, default=3000, help="MCTS simulations per move")
+    p.add_argument("--coach-simulations", type=int, default=0, help="If >0, show top suggested moves on your turns")
+    p.add_argument("--coach-top", type=int, default=3, help="How many coach moves to show")
+    p.add_argument("--explain-bot", action="store_true", help="Show bot move ranking and principal variation")
+    p.add_argument("--explain-top", type=int, default=5, help="How many bot candidate moves to show")
+    p.add_argument("--pv-depth", type=int, default=6, help="Principal variation depth for --explain-bot")
     args = p.parse_args()
 
     game = Checkers()
@@ -63,6 +75,22 @@ def main() -> None:
 
         if current == human:
             legal = game.get_legal_actions(state)
+            if args.coach_simulations > 0:
+                coach_root, coach_action = run_bot(
+                    game,
+                    state,
+                    num_simulations=args.coach_simulations,
+                )
+                if coach_action is not None:
+                    print(f"[Coach] Suggested move: {action_to_str(coach_action)}")
+                print(
+                    format_root_action_table(
+                        coach_root,
+                        top_n=args.coach_top,
+                        action_to_str=action_to_str,
+                    )
+                )
+                print()
             if use_rich:
                 ui.console.print("[bold]Legal moves:[/]")
                 for i, m in enumerate(legal, 1):
@@ -101,6 +129,19 @@ def main() -> None:
             root, action = run_bot(game, state, num_simulations=num_simulations)
             if action is None:
                 break
+            if args.explain_bot:
+                print("[Bot analysis]")
+                print(
+                    format_root_action_table(
+                        root,
+                        top_n=args.explain_top,
+                        action_to_str=action_to_str,
+                    )
+                )
+                pv = principal_variation(root, max_depth=args.pv_depth)
+                if pv:
+                    print("PV:", " -> ".join(action_to_str(a) for a in pv))
+                print()
             state = game.apply_action(state, action)
             if use_rich:
                 ui.console.print(f"[blue]Bot plays [bold]{move_to_str(action)}[/bold][/blue]\n")
